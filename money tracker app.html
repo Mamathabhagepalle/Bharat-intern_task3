@@ -1,0 +1,94 @@
+/* public/styles.css */
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  max-width: 300px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+</head>
+<body>
+  <h1>Money Tracker</h1>
+  
+  <form id="transactionForm">
+    <label for="description">Description:</label>
+    <input type="text" id="description" name="description" required>
+
+    <label for="amount">Amount:</label>
+    <input type="number" id="amount" name="amount" required>
+
+    <label for="type">Type:</label>
+    <select id="type" name="type" required>
+      <option value="income">Income</option>
+      <option value="expense">Expense</option>
+    </select>
+
+    <button type="submit">Add Transaction</button>
+  </form>
+
+  <h2>Transaction History</h2>
+  <table id="transactionTable">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>Amount</th>
+        <th>Type</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+// server.js
+const express = require('express');
+const mongoose = require('mongoose');
+const app = express();
+const port = 3000;
+
+app.use(express.static('public'));
+app.use(express.json());
+
+mongoose.connect('mongodb://localhost/money-tracker', { useNewUrlParser: true, useUnifiedTopology: true });
+const Transaction = mongoose.model('Transaction', {
+  description: String,
+  amount: Number,
+  type: String,
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/views/index.html');
+});
+
+app.get('/transactions', async (req, res) => {
+  const transactions = await Transaction.find();
+  res.json(transactions);
+});
+
+app.post('/transactions', async (req, res) => {
+  const { description, amount, type } = req.body;
+  const transaction = new Transaction({ description, amount, type });
+  await transaction.save();
+  res.status(201).json(transaction);
+});
+
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
+
